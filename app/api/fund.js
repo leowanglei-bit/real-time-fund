@@ -6,7 +6,6 @@ import { storageStore } from '../stores';
 import { withRetry } from '../lib/asyncHelper';
 import { getQueryClient } from '../lib/get-query-client';
 import * as qk from '../lib/query-keys';
-import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import { isTradingDay } from '../lib/tradingCalendar';
 
 import { DEFAULT_TZ, ONE_DAY_MS } from '@/app/constants';
@@ -78,42 +77,13 @@ const processRelatedSectorsQueue = async () => {
     const missingCodes = Array.from(codesSet);
     if (missingCodes.length === 0) continue;
 
-    try {
-      const { data, error } = await withRetry(() =>
-        supabase.from('fund_related').select('fund_code, related_sector').in('fund_code', missingCodes)
-      );
-
-      if (error) throw error;
-
-      const foundMap = new Map();
-      if (isArray(data)) {
-        data.forEach((item) => {
-          const c = String(item.fund_code).trim();
-          const v = item.related_sector != null ? String(item.related_sector).trim() : '';
-          foundMap.set(c, v);
-        });
-      }
-
-      const qc = getQueryClient();
-      for (const code of missingCodes) {
-        const value = foundMap.get(code) || '';
-        qc.setQueryData(qk.relatedSectors(code, seg), value, { staleTime: ONE_DAY_MS });
-
-        const key = `${code}|${seg}`;
-        const resolver = relatedSectorsInflight.get(key);
-        if (resolver) {
-          resolver.resolve(value);
-          relatedSectorsInflight.delete(key);
-        }
-      }
-    } catch (e) {
-      for (const code of missingCodes) {
-        const key = `${code}|${seg}`;
-        const resolver = relatedSectorsInflight.get(key);
-        if (resolver) {
-          resolver.resolve('');
-          relatedSectorsInflight.delete(key);
-        }
+    // Supabase removed — no fund_related data available
+    for (const code of missingCodes) {
+      const key = `${code}|${seg}`;
+      const resolver = relatedSectorsInflight.get(key);
+      if (resolver) {
+        resolver.resolve('');
+        relatedSectorsInflight.delete(key);
       }
     }
   }
@@ -126,40 +96,12 @@ const processFundSecidsQueue = async () => {
   fundSecidsQueue.clear();
   fundSecidsTimeout = null;
 
-  try {
-    const { data, error } = await withRetry(() =>
-      supabase.from('fund_secid').select('related_sector, secid').in('related_sector', missingLabels)
-    );
-
-    if (error) throw error;
-
-    const foundMap = new Map();
-    if (isArray(data)) {
-      data.forEach((item) => {
-        const l = String(item.related_sector).trim();
-        const s = item.secid != null ? String(item.secid).trim() : '';
-        foundMap.set(l, s);
-      });
-    }
-
-    const qc = getQueryClient();
-    for (const label of missingLabels) {
-      const value = foundMap.get(label) || '';
-      qc.setQueryData(qk.fundSecid(label), value, { staleTime: ONE_DAY_MS });
-
-      const resolver = fundSecidsInflight.get(label);
-      if (resolver) {
-        resolver.resolve(value);
-        fundSecidsInflight.delete(label);
-      }
-    }
-  } catch (e) {
-    for (const label of missingLabels) {
-      const resolver = fundSecidsInflight.get(label);
-      if (resolver) {
-        resolver.resolve('');
-        fundSecidsInflight.delete(label);
-      }
+  // Supabase removed — no fund_secid data available
+  for (const label of missingLabels) {
+    const resolver = fundSecidsInflight.get(label);
+    if (resolver) {
+      resolver.resolve('');
+      fundSecidsInflight.delete(label);
     }
   }
 };
@@ -170,7 +112,6 @@ const processFundSecidsQueue = async () => {
  */
 export const fetchRelatedSectorsBatch = async (codes, { cacheTime = ONE_DAY_MS, authSegment = 'anon' } = {}) => {
   if (!isArray(codes) || codes.length === 0) return {};
-  if (!isSupabaseConfigured) return {};
 
   const seg = authSegment != null && authSegment !== '' ? String(authSegment) : 'anon';
   const qc = getQueryClient();
@@ -238,7 +179,6 @@ const SECTOR_QUOTE_CACHE_MS = 60 * 1000;
  */
 export const fetchFundSecidsBatch = async (labels, { cacheTime = ONE_DAY_MS } = {}) => {
   if (!isArray(labels) || labels.length === 0) return {};
-  if (!isSupabaseConfigured) return {};
 
   const qc = getQueryClient();
   const results = {};
@@ -999,30 +939,11 @@ function fetchSinaEstimateNetworthResponse(code) {
  */
 
 /**
- * 从 Supabase gs_qdii 表获取 QDII 基金的估值数据（作为天天基金数据源 1 的 fallback）
+ * 从 Supabase gs_qdii 表获取 QDII 基金的估值数据（Supabase 已移除，始终返回 null）
  */
 export const fetchQdiiValuationFromSupabase = async (code) => {
-  if (!code || !isSupabaseConfigured) return null;
-  const normalized = String(code).trim();
-  if (!normalized) return null;
-
-  try {
-    const { data, error } = await withRetry(() =>
-      supabase.from('gs_qdii').select('gztime, gszzl, gzstatus').eq('fund_code', normalized).maybeSingle()
-    );
-
-    if (error || !data) return null;
-
-    // gszzl 在表中是 real，通常为百分比数值（如 1.23 表示 1.23%）
-    return {
-      gztime: data.gztime != null ? String(data.gztime).replace(/:(\d{2}):\d{2}$/, ':$1') : null,
-      gszzl: data.gszzl != null && Number.isFinite(Number(data.gszzl)) ? Number(data.gszzl) : null,
-      valuationSource: 'supabase_qdii',
-      gzstatus: data.gzstatus
-    };
-  } catch (e) {
-    return null;
-  }
+  // Supabase removed — QDII valuation not available
+  return null;
 };
 
 /**
@@ -1035,110 +956,28 @@ export const fetchQdiiValuationFromSupabase = async (code) => {
  * @returns {Promise<{ bestSource: number|null, isYesterdayAccuracy: boolean, isTodayAccuracy: boolean, diffs: Object<string,number>, diff?: number }|null>}
  */
 export async function fetchBestValuationSource(code, jzrq, actualZzl) {
-  if (!isSupabaseConfigured || !supabase?.functions?.invoke) return null;
-  const c = code != null ? String(code).trim() : '';
-  if (!c || !jzrq || !isNumber(actualZzl) || !Number.isFinite(actualZzl)) return null;
-
-  const qc = getQueryClient();
-  const cacheKey = qk.bestValuationSource(c, jzrq, actualZzl);
-  const cached = qc.getQueryData(cacheKey);
-  if (cached !== undefined) {
-    return cached;
-  }
-
-  try {
-    const { data, error } = await withRetry(() =>
-      supabase.functions.invoke('best-valuation-source', {
-        body: { code: c, jzrq, actualZzl }
-      })
-    );
-
-    if (error || !data?.success) return null;
-    const res = data.data || null;
-    qc.setQueryData(cacheKey, res, { staleTime: 60 * 60 * 1000 });
-    return res;
-  } catch (e) {
-    return null;
-  }
+  // Supabase removed — best valuation source lookup not available
+  return null;
 }
 
 /**
- * 调用 Supabase RPC 获取基金最佳数据源（从 fund_pingzhongdata 表中预计算的 source 字段）
+ * 获取基金最佳数据源（Supabase 已移除，始终返回 null）
  * @param {string} fundCode - 基金编码
- * @returns {Promise<number|null>} 数据源 ID (1/2/3) 或 null
+ * @returns {Promise<null>} 始终返回 null
  */
-const SOURCE_NAME_TO_ID = { fundgz: 1, sina_ds2: 2, sina_ds3: 3 };
-
 export async function fetchFundBestSource(fundCode) {
-  if (!isSupabaseConfigured) return null;
-  const code = fundCode != null ? String(fundCode).trim() : '';
-  if (!code) return null;
-
-  const qc = getQueryClient();
-  const cacheKey = qk.fundBestSource(code);
-  const cached = qc.getQueryData(cacheKey);
-  if (cached !== undefined) {
-    return cached;
-  }
-
-  try {
-    const { data, error } = await supabase.rpc('get_fund_best_source', {
-      p_fund_code: code
-    });
-    if (error || !data?.source) return null;
-    const res = SOURCE_NAME_TO_ID[data.source] ?? null;
-    if (res != null) {
-      qc.setQueryData(cacheKey, res, { staleTime: 60 * 60 * 1000 });
-    }
-    return res;
-  } catch {
-    return null;
-  }
+  // Supabase removed — best source lookup not available
+  return null;
 }
 
 /**
- * 批量获取多个基金的最佳数据源
+ * 批量获取多个基金的最佳数据源（Supabase 已移除，始终返回空对象）
  * @param {string[]} fundCodes - 基金编码数组
- * @returns {Promise<Record<string, number>>} 返回对象格式 { "110022": 1, "000001": 2 }
+ * @returns {Promise<Record<string, number>>} 始终返回 {}
  */
 export async function fetchFundsBestSources(fundCodes) {
-  if (!isSupabaseConfigured || !isArray(fundCodes) || fundCodes.length === 0) return {};
-
-  const qc = getQueryClient();
-  const result = {};
-  const missingCodes = [];
-
-  for (const c of fundCodes) {
-    const code = c != null ? String(c).trim() : '';
-    if (!code) continue;
-    const cached = qc.getQueryData(qk.fundBestSource(code));
-    if (cached !== undefined) {
-      result[code] = cached;
-    } else {
-      missingCodes.push(code);
-    }
-  }
-
-  if (missingCodes.length === 0) return result;
-
-  try {
-    const { data, error } = await supabase.rpc('get_fund_best_source', {
-      p_fund_codes: missingCodes
-    });
-    if (error || !data) return result;
-
-    // 返回的 data 类似 { "110022": "sina_ds2", "000001": "fundgz" }
-    Object.entries(data).forEach(([code, sourceName]) => {
-      const id = SOURCE_NAME_TO_ID[sourceName];
-      if (id != null) {
-        result[code] = id;
-        qc.setQueryData(qk.fundBestSource(code), id, { staleTime: 60 * 60 * 1000 });
-      }
-    });
-    return result;
-  } catch {
-    return result;
-  }
+  // Supabase removed — batch best sources lookup not available
+  return {};
 }
 
 /**
@@ -1214,21 +1053,7 @@ export async function fetchFundValuationBySource(code, dataSource = 1) {
       fn(arg);
     };
     const safeResolve = settleOnce(resolve);
-    const safeReject = settleOnce(reject);
-
-    const trySupabaseFallback = async (originalError) => {
-      fundDebugLog('fetchFundValuationBySource try supabase fallback', { code: c });
-      const qdii = await fetchQdiiValuationFromSupabase(c);
-      if (qdii) {
-        safeResolve({
-          code: c,
-          ...qdii,
-          gsz: null // 由 fetchFundData 等调用方配合 dwjz 计算
-        });
-      } else {
-        safeReject(originalError || new Error('gz failed and no qdii fallback'));
-      }
-    };
+    const safeRejectOnce = settleOnce(reject);
 
     const scriptGz = document.createElement('script');
     scriptGz.src = gzUrl;
@@ -1249,7 +1074,7 @@ export async function fetchFundValuationBySource(code, dataSource = 1) {
     const onTimeout = () => {
       fundDebugLog('fetchFundValuationBySource gz timeout', { code: c, timeoutMs: 8000 });
       cleanupScript();
-      trySupabaseFallback(new Error('gz timeout'));
+      safeRejectOnce(new Error('gz timeout'));
     };
 
     const timer = setTimeout(onTimeout, 5000);
@@ -1262,7 +1087,7 @@ export async function fetchFundValuationBySource(code, dataSource = 1) {
         cleanupScript();
 
         if (!json || !isObject(json)) {
-          trySupabaseFallback(new Error('invalid json'));
+          safeRejectOnce(new Error('invalid json'));
           return;
         }
 
@@ -1278,7 +1103,7 @@ export async function fetchFundValuationBySource(code, dataSource = 1) {
       },
       onError: (e) => {
         cleanupScript();
-        trySupabaseFallback(e || new Error('gz error callback'));
+        safeRejectOnce(e || new Error('gz error callback'));
       }
     });
 
@@ -1380,16 +1205,8 @@ export const fetchFundData = async (c, overrideDataSource) => {
   });
 
   // 2. 发起估值请求
-  // 对于已知 valuationSource 为 supabase_qdii 的基金（dataSource=1），直接走 Supabase 查询，
-  // 避免 fundgz JSONP 对 QDII 基金无响应导致等待超时
-  const gzPromise =
-    storedValuationSource === 'supabase_qdii' && normalizeValuationDataSource(dataSource) === 1
-      ? fetchQdiiValuationFromSupabase(code).then((qdii) => {
-          if (qdii) return { code, ...qdii, gsz: null };
-          // Supabase 无数据时回退到常规流程
-          return fetchFundValuationBySource(code, dataSource);
-        })
-      : fetchFundValuationBySource(code, dataSource);
+  // supabase_qdii 数据源已移除，直接走常规数据源流程
+  const gzPromise = fetchFundValuationBySource(code, dataSource);
 
   // 3. 编排并合并数据
   return new Promise(async (resolve, reject) => {
@@ -1428,8 +1245,8 @@ export const fetchFundData = async (c, overrideDataSource) => {
       }
     }
 
-    // 针对 supabase_qdii 等仅提供 gszzl 的数据源，使用最新的 dwjz 计算 gsz
-    if (baseData.valuationSource === 'supabase_qdii' || (baseData.gsz == null && baseData.gszzl != null)) {
+    // 针对仅提供 gszzl 的数据源（如 supabase_qdii 已移除），使用最新的 dwjz 计算 gsz
+    if (baseData.gsz == null && baseData.gszzl != null) {
       const nav = Number(baseData.dwjz);
       const gszzl = Number(baseData.gszzl);
       if (Number.isFinite(nav) && Number.isFinite(gszzl)) {
@@ -2320,54 +2137,17 @@ export const fetchFundHistory = async (code, range = '1m', options = {}) => {
 };
 
 export const fetchFundValuationTrend = async (code, range = '3m') => {
-  if (!isSupabaseConfigured) return [];
-  if (!supabase?.functions?.invoke) return [];
-
-  const { data, error } = await withRetry(() =>
-    supabase.functions.invoke('get-fund-valuation-trend', {
-      body: { fund_code: code, range }
-    })
-  );
-
-  if (error || !data || data.error) return [];
-  return isArray(data.data) ? data.data : [];
+  // Supabase removed — valuation trend not available
+  return [];
 };
 
 export const parseFundTextWithLLM = async (text) => {
-  if (!text) return null;
-  if (!isSupabaseConfigured) return null;
-  if (!supabase?.functions?.invoke) return null;
-
-  try {
-    const { data, error } = await withRetry(() =>
-      supabase.functions.invoke('analyze-fund', {
-        body: { text }
-      })
-    );
-
-    // 处理每日 OCR 用量限流
-    if (data?.error === 'DAILY_LIMIT_EXCEEDED') {
-      const err = new Error(data.message || '今日 OCR 识别次数已达上限');
-      err.code = 'DAILY_LIMIT_EXCEEDED';
-      err.remaining = 0;
-      throw err;
-    }
-
-    if (error) return null;
-    if (!data || data.success !== true) return null;
-    if (!isArray(data.data)) return null;
-
-    // 保持与旧实现兼容：返回 JSON 字符串，由调用方 JSON.parse
-    return JSON.stringify(data.data);
-  } catch (e) {
-    // 限流错误向上传播，让调用方捕获并展示提示
-    if (e?.code === 'DAILY_LIMIT_EXCEEDED') throw e;
-    return null;
-  }
+  // Supabase removed — OCR via edge function not available
+  return null;
 };
 
 /**
- * 通过 Supabase Edge Function 获取天天基金估值排行
+ * 通过 Supabase Edge Function 获取天天基金估值排行（Supabase 已移除，始终返回 null）
  * @param {string|number} sort 排序字段 (3:估值涨幅, 4:成交热度, 5:实际涨幅)
  * @param {string} order 排序方向 (desc | asc)
  * @param {number} page 页码
@@ -2375,44 +2155,17 @@ export const parseFundTextWithLLM = async (text) => {
  * @returns {Promise<{Data: {list: Array, allRecords: number}} | null>}
  */
 export const fetchFundValuationRanking = async (sort = 3, order = 'desc', page = 1, pageSize = 20) => {
-  if (!isSupabaseConfigured) return null;
-  if (!supabase?.functions?.invoke) return null;
-
-  const { data, error } = await withRetry(() =>
-    supabase.functions.invoke('fund-valuation-ranking', {
-      body: { sort, order, page, pageSize }
-    })
-  );
-
-  if (error) throw new Error(error.message || '加载估值排行失败');
-  if (!data || data.success !== true) throw new Error(data?.error || '加载估值排行失败');
-
-  // 保持与原 JSONP 返回结构一致：{ Data: { list: [...], ... } }
-  return { Data: data.data };
+  // Supabase removed — valuation ranking not available
+  return null;
 };
 
 /**
- * 查询当前用户今日 OCR 剩余可用次数
+ * 查询当前用户今日 OCR 剩余可用次数（Supabase 已移除，始终返回默认值）
  * @param {string} userId 当前用户 ID
  * @param {number} [maxLimit=5] 每日上限
  * @returns {Promise<{ remaining: number, used: number, max: number }>}
  */
 export const fetchOcrDailyRemaining = async (userId, maxLimit = 5) => {
-  if (!userId || !isSupabaseConfigured) return { remaining: maxLimit, used: 0, max: maxLimit };
-
-  try {
-    const today = new Date().toISOString().slice(0, 10);
-    const { data, error } = await supabase
-      .from('ocr_daily_usage')
-      .select('count')
-      .eq('user_id', userId)
-      .eq('usage_date', today)
-      .maybeSingle();
-
-    if (error) return { remaining: maxLimit, used: 0, max: maxLimit };
-    const used = data?.count || 0;
-    return { remaining: Math.max(0, maxLimit - used), used, max: maxLimit };
-  } catch {
-    return { remaining: maxLimit, used: 0, max: maxLimit };
-  }
+  // Supabase removed — OCR daily usage tracking not available
+  return { remaining: maxLimit, used: 0, max: maxLimit };
 };

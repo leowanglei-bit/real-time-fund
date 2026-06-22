@@ -5,7 +5,6 @@ import { useIsMobile } from '@/app/hooks/useIsMobile';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { Plus, Tag, X, Pencil, Sparkles } from 'lucide-react';
-import { supabase, isSupabaseConfigured } from '@/app/lib/supabase';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Drawer, DrawerClose, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
@@ -184,53 +183,13 @@ export default function FundTagsEditDialog({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, fundCode]);
 
-  /** 弹框打开时查询推荐标签（基于基金 topic → sector_id） */
+  /** 弹框打开时查询推荐标签（数据源已移除） */
   useEffect(() => {
-    if (!open || !fundCode || !isSupabaseConfigured) {
+    if (!open || !fundCode) {
       setSuggestedTags([]);
       return;
     }
-    let cancelled = false;
-    (async () => {
-      try {
-        const { data, error } = await supabase.rpc('get_fund_recommended_tags', { p_fund_code: fundCode });
-        if (cancelled) return;
-        if (error || !isArray(data) || data.length === 0) {
-          setSuggestedTags([]);
-          return;
-        }
-        const tags = data.flatMap((row) => {
-          const topicStr = String(row?.topic ?? '').trim();
-          const sectorIdStr = String(row?.sector_id ?? '').trim();
-          if (!topicStr || !sectorIdStr) return [];
-
-          const topics = topicStr
-            .split(';')
-            .map((t) => t.trim())
-            .filter(Boolean);
-          const sectorIds = sectorIdStr
-            .split(';')
-            .map((t) => t.trim())
-            .filter(Boolean);
-
-          const result = [];
-          for (let i = 0; i < topics.length; i++) {
-            const t = topics[i];
-            const s = sectorIds[i];
-            if (t && s) {
-              result.push({ id: `default_${s}`, name: t, theme: DEFAULT_TAG_THEME });
-            }
-          }
-          return result;
-        });
-        setSuggestedTags(tags);
-      } catch {
-        if (!cancelled) setSuggestedTags([]);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
+    setSuggestedTags([]);
   }, [open, fundCode]);
 
   const removeTagFromFund = useCallback(

@@ -33,7 +33,6 @@ import RefreshButton from './components/RefreshButton';
 const UpdateChecker = dynamic(() => import('./components/UpdateChecker'), { ssr: false });
 import MarketIndexAccordion from './components/MarketIndexAccordion';
 import githubImg from './assets/github.svg';
-import { supabase, isSupabaseConfigured } from './lib/supabase';
 import { getAllValuationSeries, clearFund } from './lib/valuationTimeseries';
 import { aggregatePortfolioDailyEarnings } from './lib/dailyEarnings';
 import { loadHolidaysForYears, isTradingDay as isDateTradingDay } from './lib/tradingCalendar';
@@ -64,7 +63,6 @@ import { useIsMobile } from './hooks/useIsMobile';
 import {
   useUserStore,
   clearAuthUser,
-  setAuthUser,
   useStorageStore,
   storageStore,
   normalizePendingTrades,
@@ -194,8 +192,6 @@ export default function HomePage() {
   }, [fundTagRecords, funds]);
 
   const [error, setError] = useState('');
-  const isLoggingOutRef = useRef(false);
-  const isExplicitLoginRef = useRef(false);
 
   // 刷新频率与布局配置状态
   const {
@@ -2005,10 +2001,6 @@ export default function HomePage() {
   // 定投计划自动生成买入队列的逻辑会在 storageHelper 定义之后实现
 
   const handleOpenLogin = () => {
-    if (!isSupabaseConfigured) {
-      showToast('未配置 Supabase，无法登录', 'error');
-      return;
-    }
     setLoginModalOpen(true);
   };
 
@@ -2586,14 +2578,8 @@ export default function HomePage() {
       initFundDividends();
       initSort();
       try {
-        // 已登录用户：不在此处调用 refreshAll，等 fetchCloudConfig 完成后由 applyCloudConfig 统一刷新
+        // Anonymous users always refresh from local
         let shouldRefreshFromLocal = true;
-        if (isSupabaseConfigured) {
-          const { data, error } = await supabase.auth.getSession();
-          if (!cancelled && !error && data?.session?.user) {
-            shouldRefreshFromLocal = false;
-          }
-        }
         if (cancelled) return;
 
         const saved = storageStore.getItem('funds', []);
@@ -2689,7 +2675,7 @@ export default function HomePage() {
     return () => {
       cancelled = true;
     };
-  }, [isSupabaseConfigured]);
+  }, []);
 
   // 切换分组后，页面自动回到顶部（跳过首次初始化恢复）
   useEffect(() => {
