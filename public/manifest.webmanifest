@@ -1,7 +1,7 @@
 {
-  "name": "基估宝",
-  "short_name": "基估宝",
-  "description": "基金管理管家",
+  "name": "灵犀茶馆",
+  "short_name": "灵犀茶馆",
+  "description": "洗砚池",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
