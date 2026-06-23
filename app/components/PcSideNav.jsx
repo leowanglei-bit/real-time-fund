@@ -2,13 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { motion, LayoutGroup, useReducedMotion } from 'framer-motion';
-import { Home, TrendingUp, ChevronRight } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import { useIsMobile } from '../hooks/useIsMobile';
 
-const TABS = [
-  { id: 'home', label: '首页', Icon: Home },
-  { id: 'market', label: '行情', Icon: TrendingUp }
-];
+const TABS = [];
 
 export default function PcSideNav({ value, onChange }) {
   const [mounted, setMounted] = useState(false);
