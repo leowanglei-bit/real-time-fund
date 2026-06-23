@@ -135,26 +135,6 @@ export default function UserMenu({
                         <CalendarIcon width="16" height="16" />
                         <span>我的收益</span>
                       </button>
-                      <button
-                        className="user-menu-item"
-                        onClick={() => {
-                          setUserMenuOpen(false);
-                          onTutorial?.();
-                        }}
-                      >
-                        <HelpCircle width="16" height="16" />
-                        <span>使用帮助</span>
-                      </button>
-                      <button
-                        className="user-menu-item"
-                        onClick={() => {
-                          setUserMenuOpen(false);
-                          onUpdateLog?.();
-                        }}
-                      >
-                        <ListIcon width="16" height="16" />
-                        <span>更新日志</span>
-                      </button>
                     </>
                   )}
                   <Tooltip>
@@ -251,26 +231,6 @@ export default function UserMenu({
                       >
                         <CalendarIcon width="16" height="16" />
                         <span>我的收益</span>
-                      </button>
-                      <button
-                        className="user-menu-item"
-                        onClick={() => {
-                          setUserMenuOpen(false);
-                          onTutorial?.();
-                        }}
-                      >
-                        <HelpCircle width="16" height="16" />
-                        <span>使用帮助</span>
-                      </button>
-                      <button
-                        className="user-menu-item"
-                        onClick={() => {
-                          setUserMenuOpen(false);
-                          onUpdateLog?.();
-                        }}
-                      >
-                        <ListIcon width="16" height="16" />
-                        <span>更新日志</span>
                       </button>
                     </>
                   )}

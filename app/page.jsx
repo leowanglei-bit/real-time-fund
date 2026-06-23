@@ -32,7 +32,6 @@ import UserMenu from './components/UserMenu';
 import RefreshButton from './components/RefreshButton';
 const UpdateChecker = dynamic(() => import('./components/UpdateChecker'), { ssr: false });
 import MarketIndexAccordion from './components/MarketIndexAccordion';
-import githubImg from './assets/github.svg';
 import { supabase, isSupabaseConfigured } from './lib/supabase';
 import { getAllValuationSeries, clearFund } from './lib/valuationTimeseries';
 import { aggregatePortfolioDailyEarnings } from './lib/dailyEarnings';
@@ -4513,15 +4512,6 @@ export default function HomePage() {
             </div>
             <div className={`actions ${isSearchFocused || selectedFunds.length > 0 ? 'search-focused-sibling' : ''}`}>
               <UpdateChecker onModalOpenChange={setIsUpdateModalOpen} />
-              <span className="github-icon-wrap">
-                <Image
-                  unoptimized
-                  alt="项目Github地址"
-                  src={githubImg}
-                  style={{ width: '30px', height: '30px', cursor: 'pointer' }}
-                  onClick={() => window.open('https://github.com/hzm0321/real-time-fund')}
-                />
-              </span>
               {isMobile && (
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -5083,13 +5073,9 @@ export default function HomePage() {
             <div className="footer">
               {!isMobile && (
                 <>
-                  <p style={{ marginBottom: 8 }}>
-                    数据源：实时估值与重仓直连东方财富，仅供个人学习及参考使用。数据可能存在延迟，不作为任何投资建议
-                  </p>
-                  <p style={{ marginBottom: 12 }}>注：估算数据与真实结算数据会有1%左右误差，非股票型基金误差较大</p>
                   <div
                     style={{
-                      marginTop: 12,
+                      marginTop: 0,
                       opacity: 0.8,
                       display: 'flex',
                       flexDirection: 'column',
@@ -5098,75 +5084,8 @@ export default function HomePage() {
                     }}
                   >
                     <p style={{ margin: 0 }}>
-                      遇到任何问题或需求建议可
-                      <button
-                        className="link-button"
-                        onClick={() => {
-                          if (!user?.id) {
-                            sonnerToast.error('请先登录后再提交反馈');
-                            return;
-                          }
-                          setFeedbackNonce((n) => n + 1);
-                          setFeedbackOpen(true);
-                        }}
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          color: 'var(--primary)',
-                          cursor: 'pointer',
-                          padding: '0 4px',
-                          textDecoration: 'underline',
-                          fontSize: 'inherit',
-                          fontWeight: 600
-                        }}
-                      >
-                        点此提交反馈
-                      </button>
-                      ，或
-                      <button
-                        className="link-button"
-                        onClick={() => _ms({ weChatOpen: true })}
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          color: 'var(--primary)',
-                          cursor: 'pointer',
-                          padding: '0 4px',
-                          textDecoration: 'underline',
-                          fontSize: 'inherit',
-                          fontWeight: 600
-                        }}
-                      >
-                        加入微信用户支持群
-                      </button>
+                      心有灵犀 谈笑间 众生皆有回响 ｜ 味归平淡 静思处 乾坤尽纳一盏
                     </p>
-                    <button
-                      onClick={() => setDonateOpen(true)}
-                      style={{
-                        background: 'transparent',
-                        border: 'none',
-                        color: 'var(--muted)',
-                        fontSize: '12px',
-                        cursor: 'pointer',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: 4,
-                        padding: '4px 8px',
-                        borderRadius: '6px',
-                        transition: 'all 0.2s ease'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.color = 'var(--primary)';
-                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.color = 'var(--muted)';
-                        e.currentTarget.style.background = 'transparent';
-                      }}
-                    >
-                      <span>☕</span>
-                      <span>点此请作者喝杯咖啡</span>
-                    </button>
                   </div>
                 </>
               )}
