@@ -324,6 +324,19 @@ export default function FundDataSourceSelector({ fund, onClose, onSelect }) {
                             {bestSource === Number(item.id) && (isYesterdayAccuracy || isTodayAccuracy) && (
                               <DataSourceAccuracyBadge label={isTodayAccuracy ? '今日最准' : '昨日最准'} />
                             )}
+                            {valuationSources[item.id] === 'supabase_qdii' && (
+                              <Badge
+                                variant="outline"
+                                className="text-[10px] px-1.5 py-0 h-[18px] min-h-0 leading-none font-medium"
+                                style={{
+                                  borderColor: 'rgba(249, 115, 22, 0.5)',
+                                  color: '#f97316',
+                                  background: 'rgba(249, 115, 22, 0.1)'
+                                }}
+                              >
+                                限免
+                              </Badge>
+                            )}
                           </div>
                           {accuracyDiffs[item.id] != null && (
                             <span

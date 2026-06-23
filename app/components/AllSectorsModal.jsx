@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { supabase } from '../lib/supabase';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '../hooks/useIsMobile';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
@@ -42,7 +43,17 @@ export default function AllSectorsModal({ onClose }) {
 
   const { data: sectorEstimates } = useQuery({
     queryKey: ['hotSectors'],
-    queryFn: async () => [],
+    queryFn: async () => {
+      try {
+        if (!supabase) return [];
+        const { data, error } = await supabase.from('fund_topic').select('*');
+        if (error) throw error;
+        return data || [];
+      } catch (e) {
+        console.error('Fetch hot sectors error:', e);
+        return [];
+      }
+    },
     staleTime: 120000
   });
 

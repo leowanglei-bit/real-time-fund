@@ -12,6 +12,7 @@ import { Calendar, CalendarDayButton } from '@/components/ui/calendar';
 import { Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Drawer, DrawerClose, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import { cn, formatMoney } from '@/lib/utils';
+import { supabase, isSupabaseConfigured } from '@/app/lib/supabase';
 import { calculateYtdReturnRate, mergeAllScopedDailyEarnings, mergeAllHoldings } from '@/app/lib/dailyEarnings';
 import { storageStore, useUserStore, useStorageStore } from '@/app/stores';
 import { searchFunds } from '@/app/api/fund';
@@ -292,7 +293,13 @@ export default function MyEarningsCalendarPage({ open, onOpenChange, series = []
         setYtdRate(rate);
         setPercentile(null);
 
-        return;
+        if (!isSupabaseConfigured || !user) return;
+
+        const { data, error } = await supabase.rpc('get_ytd_percentile', { p_ytd_rate: rate });
+        const nextPercentile = Number(data);
+        if (!cancelled && !error && Number.isFinite(nextPercentile) && nextPercentile >= 0) {
+          setPercentile(nextPercentile);
+        }
       } catch (e) {
         console.error('Failed to fetch YTD percentile', e);
         if (!cancelled) setPercentile(null);

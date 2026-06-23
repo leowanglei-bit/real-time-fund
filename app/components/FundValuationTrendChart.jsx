@@ -20,6 +20,7 @@ import {
   Filler
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
+import { isSupabaseConfigured } from '../lib/supabase';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler);
 
@@ -96,7 +97,7 @@ export default function FundValuationTrendChart({
   } = useQuery({
     queryKey: qk.fundValuationTrend(code, range),
     queryFn: () => fetchFundValuationTrend(code, range),
-    enabled: Boolean(code && isExpanded && userId),
+    enabled: Boolean(code && isExpanded && isSupabaseConfigured && userId),
     staleTime: 10 * 60 * 1000
   });
 
@@ -499,7 +500,7 @@ export default function FundValuationTrendChart({
   const lastIndex = processedData.labels.length > 0 ? processedData.labels.length - 1 : null;
   const currentIndex = activeIndex != null && activeIndex < processedData.labels.length ? activeIndex : lastIndex;
 
-  if (!userId) {
+  if (!isSupabaseConfigured || !userId) {
     return null;
   }
 
