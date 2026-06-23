@@ -1,7 +1,6 @@
 'use client';
 
 import * as React from 'react';
-import * as Sentry from '@sentry/nextjs';
 import { AlertTriangleIcon, RotateCcwIcon } from 'lucide-react';
 import { isError, isFunction, isString } from 'lodash';
 import { toast as sonnerToast } from 'sonner';
@@ -36,7 +35,7 @@ export function notifyClientError(error, options = {}) {
   const silent = options.silent || shouldSilenceClientError(error);
 
   try {
-    Sentry.captureException(error);
+    console.error('ErrorBoundary caught:', error);
   } catch {}
 
   if (silent) return;

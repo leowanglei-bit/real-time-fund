@@ -1,10 +1,8 @@
 'use client';
 
-import * as Sentry from '@sentry/nextjs';
 import { useEffect } from 'react';
 import { toast as sonnerToast } from 'sonner';
 import { AlertTriangleIcon } from 'lucide-react';
-import { isString } from 'lodash';
 
 import { Toaster } from '@/components/ui/sonner';
 import { shouldSilenceClientError } from './components/ClientErrorBoundary';
@@ -17,7 +15,7 @@ function getErrorMessage(error) {
 
 export default function GlobalError({ error }) {
   useEffect(() => {
-    Sentry.captureException(error);
+    console.error('Global error:', error);
     if (shouldSilenceClientError(error)) return;
     sonnerToast.error('页面出现异常', {
       description: getErrorMessage(error),
