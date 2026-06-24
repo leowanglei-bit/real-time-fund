@@ -25,50 +25,50 @@ html {
 }
 
 :root {
-  --bg: #1c1917;
-  --card: #292524;
-  --text: #fafaf9;
-  --muted: #a8a29e;
-  --primary: #f59e0b;
-  --accent: #d97706;
-  --success: #84cc16;
-  --danger: #f87171;
-  --border: #44403c;
-  --table-pinned-header-bg: #3a352f;
-  --table-row-hover-bg: #3a352f;
-  --table-row-alt-bg: #25211c;
+  --bg: #141414;
+  --card: #1f1f1f;
+  --text: rgba(255, 255, 255, 0.85);
+  --muted: rgba(255, 255, 255, 0.45);
+  --primary: #1668dc;
+  --accent: #4096ff;
+  --success: #49aa19;
+  --danger: #dc4446;
+  --border: #424242;
+  --table-pinned-header-bg: #2a2a2a;
+  --table-row-hover-bg: #2a2a2a;
+  --table-row-alt-bg: #1a1a1a;
   --radius: 0.625rem;
-  --background: #1c1917;
-  --foreground: #fafaf9;
-  --card-foreground: #fafaf9;
-  --popover: #292524;
-  --popover-foreground: #fafaf9;
-  --primary-foreground: #1c1917;
-  --secondary: #292524;
-  --secondary-foreground: #fafaf9;
-  --muted-foreground: #a8a29e;
-  --accent-foreground: #fafaf9;
-  --destructive: #f87171;
-  --input: #292524;
-  --ring: #f59e0b;
-  --chart-1: #f59e0b;
-  --chart-2: #d97706;
-  --chart-3: #84cc16;
+  --background: #141414;
+  --foreground: rgba(255, 255, 255, 0.85);
+  --card-foreground: rgba(255, 255, 255, 0.85);
+  --popover: #1f1f1f;
+  --popover-foreground: rgba(255, 255, 255, 0.85);
+  --primary-foreground: #ffffff;
+  --secondary: #1f1f1f;
+  --secondary-foreground: rgba(255, 255, 255, 0.85);
+  --muted-foreground: rgba(255, 255, 255, 0.45);
+  --accent-foreground: #ffffff;
+  --destructive: #dc4446;
+  --input: #1f1f1f;
+  --ring: #1668dc;
+  --chart-1: #1668dc;
+  --chart-2: #4096ff;
+  --chart-3: #49aa19;
   --chart-4: #f472b6;
   --chart-5: #fbbf24;
-  --sidebar: #292524;
-  --sidebar-foreground: #fafaf9;
-  --sidebar-primary: #f59e0b;
-  --sidebar-primary-foreground: #1c1917;
-  --sidebar-accent: #44403c;
-  --sidebar-accent-foreground: #fafaf9;
-  --sidebar-border: #44403c;
-  --sidebar-ring: #f59e0b;
-  --drawer-overlay: rgba(2, 6, 23, 0.5);
-  --dialog-overlay: rgba(2, 6, 23, 0.6);
+  --sidebar: #1f1f1f;
+  --sidebar-foreground: rgba(255, 255, 255, 0.85);
+  --sidebar-primary: #1668dc;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #2a2a2a;
+  --sidebar-accent-foreground: rgba(255, 255, 255, 0.85);
+  --sidebar-border: #424242;
+  --sidebar-ring: #1668dc;
+  --drawer-overlay: rgba(0, 0, 0, 0.5);
+  --dialog-overlay: rgba(0, 0, 0, 0.6);
   --tabs-list-bg: rgba(255, 255, 255, 0.04);
   --tabs-list-border: transparent;
-  --tabs-trigger-active-bg: rgba(34, 211, 238, 0.12);
+  --tabs-trigger-active-bg: rgba(22, 119, 255, 0.2);
   --tabs-trigger-active-text: var(--primary);
   --switch-thumb: var(--foreground);
   /* 我的收益 Drawer：随主题切换，玻璃拟态 + 主色点缀（ui-ux-pro-max：层次、对比度、blur） */
@@ -110,51 +110,51 @@ html {
   --my-earnings-illu-baseline: #4bc1ff;
 }
 
-/* 亮色主题：暖色调茶馆风格 */
+/* 亮色主题：antd 经典蓝色系 */
 [data-theme='light'] {
-  --bg: #fffbeb;
+  --bg: #f5f5f5;
   --card: #ffffff;
-  --text: #292524;
-  --muted: #78716c;
-  --primary: #b45309;
-  --accent: #d97706;
-  --success: #65a30d;
-  --danger: #dc2626;
-  --border: #e7e5e4;
-  --table-pinned-header-bg: #e7e5e4;
-  --table-row-hover-bg: #e7e5e4;
-  --table-row-alt-bg: #fafaf9;
+  --text: rgba(0, 0, 0, 0.88);
+  --muted: rgba(0, 0, 0, 0.45);
+  --primary: #1677ff;
+  --accent: #4096ff;
+  --success: #52c41a;
+  --danger: #ff4d4f;
+  --border: #d9d9d9;
+  --table-pinned-header-bg: #d9d9d9;
+  --table-row-hover-bg: #e6f4ff;
+  --table-row-alt-bg: #fafafa;
   --background: #ffffff;
-  --foreground: #292524;
-  --card-foreground: #292524;
+  --foreground: rgba(0, 0, 0, 0.88);
+  --card-foreground: rgba(0, 0, 0, 0.88);
   --popover: #ffffff;
-  --popover-foreground: #292524;
+  --popover-foreground: rgba(0, 0, 0, 0.88);
   --primary-foreground: #ffffff;
-  --secondary: #f5f0eb;
-  --secondary-foreground: #292524;
-  --muted-foreground: #78716c;
+  --secondary: #fafafa;
+  --secondary-foreground: rgba(0, 0, 0, 0.88);
+  --muted-foreground: rgba(0, 0, 0, 0.45);
   --accent-foreground: #ffffff;
-  --destructive: #dc2626;
-  --input: #f5f0eb;
-  --ring: #b45309;
-  --chart-1: #b45309;
-  --chart-2: #d97706;
-  --chart-3: #65a30d;
-  --chart-4: #db2777;
-  --chart-5: #ca8a04;
-  --sidebar: #fafaf9;
-  --sidebar-foreground: #292524;
-  --sidebar-primary: #b45309;
+  --destructive: #ff4d4f;
+  --input: #fafafa;
+  --ring: #1677ff;
+  --chart-1: #1677ff;
+  --chart-2: #4096ff;
+  --chart-3: #52c41a;
+  --chart-4: #ff4d4f;
+  --chart-5: #faad14;
+  --sidebar: #ffffff;
+  --sidebar-foreground: rgba(0, 0, 0, 0.88);
+  --sidebar-primary: #1677ff;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #f5f0eb;
-  --sidebar-accent-foreground: #292524;
-  --sidebar-border: #e7e5e4;
-  --sidebar-ring: #b45309;
+  --sidebar-accent: #f5f5f5;
+  --sidebar-accent-foreground: rgba(0, 0, 0, 0.88);
+  --sidebar-border: #d9d9d9;
+  --sidebar-ring: #1677ff;
   --drawer-overlay: rgba(15, 23, 42, 0.25);
   --dialog-overlay: rgba(15, 23, 42, 0.35);
   --tabs-list-bg: rgba(0, 0, 0, 0.04);
   --tabs-list-border: var(--border);
-  --tabs-trigger-active-bg: rgba(180, 83, 9, 0.15);
+  --tabs-trigger-active-bg: rgba(22, 119, 255, 0.12);
   --tabs-trigger-active-text: var(--primary);
   --switch-thumb: var(--background);
   --my-earnings-hero-text: var(--foreground);
@@ -323,14 +323,14 @@ body::before {
 
 /* 亮色主题：按钮样式适配 */
 [data-theme='light'] .button {
-  border-color: rgba(180, 83, 9, 0.4);
-  background: linear-gradient(180deg, #d97706, #b45309);
+  border-color: rgba(22, 119, 255, 0.4);
+  background: linear-gradient(180deg, #4096ff, #1677ff);
   color: #fff;
-  box-shadow: 0 2px 8px rgba(180, 83, 9, 0.2);
+  box-shadow: 0 2px 8px rgba(22, 119, 255, 0.2);
 }
 
 [data-theme='light'] .button:hover {
-  box-shadow: 0 6px 20px rgba(180, 83, 9, 0.35);
+  box-shadow: 0 6px 20px rgba(22, 119, 255, 0.35);
 }
 
 [data-theme='light'] .button.secondary {
