@@ -7,7 +7,9 @@ import { Field, FieldContent } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
-export default function SearchFund({
+export default function SearchFund() {
+  return null;
+}
   value,
   onSearch,
   placeholder = '筛选当前分组基金名称、代码或标签...',
