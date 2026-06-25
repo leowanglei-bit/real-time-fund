@@ -1,21 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { motion, LayoutGroup, useReducedMotion } from 'framer-motion';
-import { ChevronRight } from 'lucide-react';
-import { useIsMobile } from '../hooks/useIsMobile';
+
 
 const TABS = [];
 
 export default function PcSideNav({ value, onChange }) {
-  const [mounted, setMounted] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
-  const isMobile = useIsMobile();
-  const reduceMotion = useReducedMotion();
-
-  useEffect(() => setMounted(true), []);
-
-  if (!mounted || isMobile) return null;
+  return null;
 
   const spring = reduceMotion ? { duration: 0.2 } : { type: 'spring', stiffness: 420, damping: 34, mass: 0.8 };
 
