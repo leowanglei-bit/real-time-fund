@@ -4487,7 +4487,6 @@ export default function HomePage() {
                     ))}
                   </div>
                 )}
-                {false && (
                 <SearchBar
                   inputRef={inputRef}
                   searchTerm={searchTerm}
@@ -4504,7 +4503,6 @@ export default function HomePage() {
                   handleScanClick={handleScanClick}
                   addFund={addFund}
                 />
-                )}
               </div>
               {error && (
                 <div className="muted" style={{ marginTop: 8, color: 'var(--danger)' }}>
