@@ -11,7 +11,7 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import packageJson from '../package.json';
 
 export const metadata = {
-  title: `灵犀茶馆 V${packageJson.version}`,
+  title: `灵犀茶馆- 洗砚池`,
   description: '输入基金编号添加基金，实时显示估值与前10重仓'
 };
 
