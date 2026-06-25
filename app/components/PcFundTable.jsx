@@ -2966,7 +2966,7 @@ const PcFundTable = memo(function PcFundTable({
                   top: effectiveStickyTop,
                   left: portalHorizontal.left,
                   right: portalHorizontal.right,
-                  zIndex: 10,
+                  zIndex: 15,
                   overflowX: 'auto',
                   scrollbarWidth: 'none'
                 }}
