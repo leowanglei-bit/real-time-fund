@@ -1467,7 +1467,7 @@ html::-webkit-scrollbar-thumb:active,
   background: rgba(255, 255, 255, 0.05);
   border-bottom: 1px solid var(--border);
   position: sticky;
-  z-index: 45;
+  z-index: 9999;
 }
 
 .table-header-row-scroll .table-header-cell {
