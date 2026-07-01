@@ -2566,7 +2566,7 @@ const PcFundTable = memo(function PcFundTable({
       position: 'sticky',
       left: isLeft ? `${column.getStart('left')}px` : undefined,
       right: isRight ? `${column.getAfter('right')}px` : undefined,
-      zIndex: isHeader ? 11 : 10,
+      zIndex: isHeader ? 9998 : 10,
       backgroundColor: isHeader ? 'var(--table-pinned-header-bg)' : 'var(--row-bg, var(--bg))',
       boxShadow: 'none',
       textAlign: isNameColumn ? 'left' : 'center',
@@ -2966,7 +2966,7 @@ const PcFundTable = memo(function PcFundTable({
                   top: effectiveStickyTop,
                   left: portalHorizontal.left,
                   right: portalHorizontal.right,
-                  zIndex: 45,
+                  zIndex: 9999,
                   overflowX: 'auto',
                   scrollbarWidth: 'none'
                 }}
