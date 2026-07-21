@@ -1438,7 +1438,19 @@ export const fetchFundData = async (c, overrideDataSource) => {
     storedValuationSource === 'supabase_qdii' && isSupabaseConfigured && normalizeValuationDataSource(dataSource) === 1
       ? fetchQdiiValuationFromSupabase(code).then((qdii) => {
           if (qdii) return { code, ...qdii, gsz: null };
-          // Supabase 无数据时回退到常规流程
+          // Supabase 无数据时，清除存储的 supabase_qdii 标记，避免下次重复走此路径
+          try {
+            const storedFunds = storageStore.getItem('funds', []);
+            if (isArray(storedFunds)) {
+              const idx = storedFunds.findIndex((x) => x.code === code);
+              if (idx !== -1 && storedFunds[idx].valuationSource === 'supabase_qdii') {
+                const updated = [...storedFunds];
+                updated[idx] = { ...updated[idx], valuationSource: undefined };
+                storageStore.setItem('funds', updated);
+              }
+            }
+          } catch (e) {}
+          // 回退到常规估值流程（fundgz → pingzhongdata）
           return fetchFundValuationBySource(code, dataSource);
         })
       : fetchFundValuationBySource(code, dataSource);
