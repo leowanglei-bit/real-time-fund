@@ -24,7 +24,10 @@ export async function loadHolidaysForYear(year) {
     yearCache.set(year, holidays);
     return holidays;
   } catch (e) {
-    console.warn(`[tradingCalendar] 加载 ${year} 年节假日失败:`, e);
+    // 404 = 未来年份数据尚未发布，静默处理；其他异常（网络/解析）才告警
+    if (!e?.message?.includes('HTTP 404')) {
+      console.warn(`[tradingCalendar] 加载 ${year} 年节假日失败:`, e);
+    }
     yearCache.set(year, new Set());
     return yearCache.get(year);
   }
