@@ -757,16 +757,35 @@ export const fetchFundDataFallback = async (c) => {
   }
   return new Promise(async (resolve, reject) => {
     try {
-      // 尝试并行获取 F10 数据和通过搜索接口获取基金名称
+      // 尝试并行获取 F10 数据（失败时降级pingzhongdata）和通过搜索接口获取基金名称
       const f10Promise = (async () => {
-        const url = `https://fundf10.eastmoney.com/F10DataApi.aspx?type=lsjz&code=${c}&page=1&per=3&sdate=&edate=`;
-        const apidata = await loadScript(url);
-        const content = apidata?.content || '';
-        const navList = parseNetValuesFromLsjzContent(content);
-        const latest = navList.length > 0 ? navList[navList.length - 1] : null;
-        const previousNav = navList.length > 1 ? navList[navList.length - 2] : null;
-        const yM = computeYesterdayNavMetricsFromList(navList);
-        return { latest, previousNav, yM };
+        try {
+          const url = `https://fundf10.eastmoney.com/F10DataApi.aspx?type=lsjz&code=${c}&page=1&per=3&sdate=&edate=`;
+          const apidata = await loadScript(url);
+          const content = apidata?.content || '';
+          const navList = parseNetValuesFromLsjzContent(content);
+          if (navList.length > 0) {
+            const latest = navList[navList.length - 1];
+            const previousNav = navList.length > 1 ? navList[navList.length - 2] : null;
+            const yM = computeYesterdayNavMetricsFromList(navList);
+            return { latest, previousNav, yM };
+          }
+        } catch (e) {}
+        // 降级：从 pingzhongdata 提取最新净值
+        try {
+          const pingzhong = await fetchAndParsePingzhongdata(c);
+          const trend = pingzhong?.Data_netWorthTrend;
+          if (isArray(trend) && trend.length > 0) {
+            const sorted = [...trend].filter(d => d && isNumber(d.x) && Number.isFinite(Number(d.y)))
+              .sort((a, b) => a.x - b.x);
+            if (sorted.length > 0) {
+              const latest = { nav: Number(sorted[sorted.length - 1].y), date: dayjs.tz(sorted[sorted.length - 1].x, TZ).format('YYYY-MM-DD') };
+              const previousNav = sorted.length > 1 ? { nav: Number(sorted[sorted.length - 2].y) } : null;
+              return { latest, previousNav, yM: { yesterdayZzl: null, yesterdayNavDelta: null } };
+            }
+          }
+        } catch (e2) {}
+        return { latest: null, previousNav: null, yM: {} };
       })();
 
       const namePromise = (async () => {
@@ -1217,6 +1236,10 @@ export async function fetchFundValuationBySource(code, dataSource = 1) {
     const safeReject = settleOnce(reject);
 
     const trySupabaseFallback = async (originalError) => {
+      if (!isSupabaseConfigured) {
+        safeReject(originalError || new Error('gz failed'));
+        return;
+      }
       fundDebugLog('fetchFundValuationBySource try supabase fallback', { code: c });
       const qdii = await fetchQdiiValuationFromSupabase(c);
       if (qdii) {
@@ -1354,36 +1377,65 @@ export const fetchFundData = async (c, overrideDataSource) => {
   }
 
   // 1. 发起并发的历史净值和重仓请求
-  const lsjzPromise = new Promise((resolveT) => {
-    const url = `https://fundf10.eastmoney.com/F10DataApi.aspx?type=lsjz&code=${code}&page=1&per=3&sdate=&edate=`;
-    loadScript(url, { staleTime: getNetValueStaleTime() })
-      .then((apidata) => {
-        const content = apidata?.content || '';
-        const navList = parseNetValuesFromLsjzContent(content);
-        if (navList.length > 0) {
-          const latest = navList[navList.length - 1];
-          const previousNav = navList.length > 1 ? navList[navList.length - 2] : null;
-          const yM = computeYesterdayNavMetricsFromList(navList);
-          resolveT({
-            dwjz: String(latest.nav),
-            zzl: Number.isFinite(latest.growth) ? latest.growth : null,
-            jzrq: latest.date,
-            lastNav: previousNav ? String(previousNav.nav) : null,
-            yesterdayZzl: yM.yesterdayZzl,
-            yesterdayNavDelta: yM.yesterdayNavDelta
-          });
-        } else {
-          resolveT(null);
+  // 优先尝试 F10DataApi（Script Tag），失败时降级到 pingzhongdata
+  const lsjzPromise = (async () => {
+    try {
+      const url = `https://fundf10.eastmoney.com/F10DataApi.aspx?type=lsjz&code=${code}&page=1&per=3&sdate=&edate=`;
+      const apidata = await loadScript(url, { staleTime: getNetValueStaleTime() });
+      const content = apidata?.content || '';
+      const navList = parseNetValuesFromLsjzContent(content);
+      if (navList.length > 0) {
+        const latest = navList[navList.length - 1];
+        const previousNav = navList.length > 1 ? navList[navList.length - 2] : null;
+        const yM = computeYesterdayNavMetricsFromList(navList);
+        return {
+          dwjz: String(latest.nav),
+          zzl: Number.isFinite(latest.growth) ? latest.growth : null,
+          jzrq: latest.date,
+          lastNav: previousNav ? String(previousNav.nav) : null,
+          yesterdayZzl: yM.yesterdayZzl,
+          yesterdayNavDelta: yM.yesterdayNavDelta
+        };
+      }
+    } catch (e) {
+      // F10DataApi 可能因 Referer 校验失败，降级
+    }
+    // 降级：从 pingzhongdata 提取最新净值
+    try {
+      const pingzhong = await fetchAndParsePingzhongdata(code);
+      const trend = pingzhong?.Data_netWorthTrend;
+      if (isArray(trend) && trend.length > 0) {
+        const sorted = [...trend].filter(d => d && isNumber(d.x) && Number.isFinite(Number(d.y)))
+          .sort((a, b) => a.x - b.x);
+        if (sorted.length > 0) {
+          const latest = sorted[sorted.length - 1];
+          const previous = sorted.length > 1 ? sorted[sorted.length - 2] : null;
+          const jzrq = latest.x ? dayjs.tz(latest.x, TZ).format('YYYY-MM-DD') : null;
+          const dwjzVal = Number(latest.y);
+          const lastNavVal = previous && previous.y != null ? String(Number(previous.y)) : null;
+          const zzlVal = previous && Number.isFinite(Number(previous.y)) && Number(previous.y) !== 0
+            ? ((dwjzVal - Number(previous.y)) / Number(previous.y)) * 100 : null;
+          return {
+            dwjz: Number.isFinite(dwjzVal) ? String(dwjzVal) : null,
+            zzl: zzlVal,
+            jzrq: jzrq,
+            lastNav: lastNavVal,
+            yesterdayZzl: null,
+            yesterdayNavDelta: null
+          };
         }
-      })
-      .catch(() => resolveT(null));
-  });
+      }
+    } catch (e2) {
+      // pingzhongdata 也失败
+    }
+    return null;
+  })();
 
   // 2. 发起估值请求
   // 对于已知 valuationSource 为 supabase_qdii 的基金（dataSource=1），直接走 Supabase 查询，
   // 避免 fundgz JSONP 对 QDII 基金无响应导致等待超时
   const gzPromise =
-    storedValuationSource === 'supabase_qdii' && normalizeValuationDataSource(dataSource) === 1
+    storedValuationSource === 'supabase_qdii' && isSupabaseConfigured && normalizeValuationDataSource(dataSource) === 1
       ? fetchQdiiValuationFromSupabase(code).then((qdii) => {
           if (qdii) return { code, ...qdii, gsz: null };
           // Supabase 无数据时回退到常规流程
