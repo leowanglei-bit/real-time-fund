@@ -5,7 +5,9 @@
  */
 
 const CDN_BASE = 'https://cdn.jsdelivr.net/npm/chinese-days@1/dist/years';
-const yearCache = new Map(); // year -> Set<dateStr> (holidays)
+const YEAR_CACHE = new Map(); // year -> Set<dateStr> (holidays)
+/** chinese-days@1 包已发布的最新年份，超过此年份的数据尚未发布，跳过请求 */
+const MAX_PUBLISHED_YEAR = 2026;
 
 /**
  * 加载某年的节假日数据
@@ -13,23 +15,28 @@ const yearCache = new Map(); // year -> Set<dateStr> (holidays)
  * @returns {Promise<Set<string>>} 节假日日期集合，格式 YYYY-MM-DD
  */
 export async function loadHolidaysForYear(year) {
-  if (yearCache.has(year)) {
-    return yearCache.get(year);
+  if (YEAR_CACHE.has(year)) {
+    return YEAR_CACHE.get(year);
+  }
+  // 未来年份数据尚未发布，直接返回空集，不发起网络请求
+  if (year > MAX_PUBLISHED_YEAR) {
+    YEAR_CACHE.set(year, new Set());
+    return YEAR_CACHE.get(year);
   }
   try {
     const res = await fetch(`${CDN_BASE}/${year}.json`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     const holidays = new Set(Object.keys(data?.holidays ?? {}));
-    yearCache.set(year, holidays);
+    YEAR_CACHE.set(year, holidays);
     return holidays;
   } catch (e) {
     // 404 = 未来年份数据尚未发布，静默处理；其他异常（网络/解析）才告警
     if (!e?.message?.includes('HTTP 404')) {
       console.warn(`[tradingCalendar] 加载 ${year} 年节假日失败:`, e);
     }
-    yearCache.set(year, new Set());
-    return yearCache.get(year);
+    YEAR_CACHE.set(year, new Set());
+    return YEAR_CACHE.get(year);
   }
 }
 
@@ -44,10 +51,10 @@ export async function loadHolidaysForYears(years) {
 /**
  * 判断某日期是否为 A股交易日
  * @param {dayjs.Dayjs} date - dayjs 对象
- * @param {Map<number, Set<string>>} [cache] - 可选，已加载的年份缓存，默认使用内部 yearCache
+ * @param {Map<number, Set<string>>} [cache] - 可选，已加载的年份缓存，默认使用内部 YEAR_CACHE
  * @returns {boolean}
  */
-export function isTradingDay(date, cache = yearCache) {
+export function isTradingDay(date, cache = YEAR_CACHE) {
   const dayOfWeek = date.day(); // 0=周日, 6=周六
   if (dayOfWeek === 0 || dayOfWeek === 6) return false;
 
