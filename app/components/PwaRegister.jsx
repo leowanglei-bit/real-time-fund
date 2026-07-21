@@ -15,7 +15,7 @@ export default function PwaRegister() {
       return;
     }
     navigator.serviceWorker
-      .register('/sw.js', { scope: '/', updateViaCache: 'none' })
+      .register('sw.js', { scope: '/real-time-fund/', updateViaCache: 'none' })
       .then((reg) => {
         reg.addEventListener('updatefound', () => {
           const newWorker = reg.installing;
